@@ -12,7 +12,6 @@
                         <a href="{{ route($key) }}">{{ $breadcrumb }}</a>
                     @else 
                         {{ $breadcrumb }}
-
                     @endif
                     </li>
                 @endforeach

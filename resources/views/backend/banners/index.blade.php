@@ -15,7 +15,7 @@
             @include('partials._breadcrumb', 
             ['heading' =>'Banners Listing',
              'breadcrumbs' => ['banners.index' =>'Banners']
-            ]);
+            ])
             
             <div class="row clearfix">
                 <div class="col-lg-12">

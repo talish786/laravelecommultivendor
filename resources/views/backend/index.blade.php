@@ -10,7 +10,7 @@
             @include('partials._breadcrumb', 
             ['heading' =>'Dashboard',
              'breadcrumbs' => ['' =>'eCommerce']
-            ]);
+            ])
 
             <div class="row clearfix">
                 <div class="col-lg-3 col-md-6">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Banner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class BannerController extends Controller
 {
@@ -29,7 +30,30 @@ class BannerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request,[
+            'title' => ['string','required'],
+            'description' => ['string','nullable'],
+            'photo' => ['required'],
+            'condition' => ['string','in:banner,promo'],
+            'status' => ['string','in:active,inactive'],
+        ]);
+        $data = $request->all();
+        $slug = Str::slug($request->input('title'));
+        $photoName = time().'_'.$request->file('photo')->getClientOriginalName();
+        $filePath = $request->file('photo')->storeAs('uploads/banners', $photoName, 'public');
+        $filePath = '/storage/' . $filePath;
+        $slug_count = Banner::where('slug',$slug)->count();
+        if($slug_count > 0){
+            $slug = $time.'-'.$slug;
+        }
+        $data['slug'] = $slug;
+        $data['photo'] = $filePath;
+        $status = Banner::create($data);
+        if ($status) {
+            return redirect()->route('banners.index')->with('success','Successfully Created Banner');
+        } else {
+            return back()->with('error','Something Went Wrong');
+        }
     }
 
     /**
