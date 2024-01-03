@@ -1,91 +1,122 @@
+<!DOCTYPE html>
+<html>
 
-@extends('backend.layouts.master')
+<head>
+    <title>Laravel 6 Uploads Example</title>
+    <!-- Add Bootstrap CSS link -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .preview-item img.selected {
+            border: 2px solid red;
+        }
+    </style>
+</head>
 
-@section('title')
-    Create Banners Laravel Multivendor
-@endsection
+<body>
 
-@push('styles')
-    <link rel="stylesheet" href="{{ asset('backend/assets/summernote/dist/summernote.css') }}">
-@endpush
-
-
-@section('content')
-    <div id="main-content">
-        <div class="container-fluid">
-        @include('partials._breadcrumb', 
-            ['heading' =>'Create Banners',
-             'breadcrumbs' => [
-                'banners.index' =>'Banners',
-                ''=>'Add Banner',
-                ]
-            ])
-            
-            <div class="row clearfix">
-                <div class="col-lg-12 col-md-12 col-sm-12">
-                    <div class="card">
-                        <div class="body">
-                            @if($errors->any)
-                                <ul>
-                                    @foreach($errors->all() as $error)
-                                        <li>{{$error}}</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                            <form action="{{ route('banners.store') }}" method="post" enctype="multipart/form-data">
-                                @csrf
-                                <div class="row clearfix">
-                                    <div class="col-lg-12 col-md-12">
-                                        <div class="form-group">
-                                            <input type="text" name="title" id="title" class="form-control" placeholder="Title">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row clearfix">
-                                    <div class="col-lg-6 col-md-6 col-sm-12">                                
-                                        <select name="status" class="form-control show-tick">
-                                            <option value="">-- Status --</option>
-                                            <option value="active" {{old('status')=='active' ? 'selected' :''}}>Active</option>
-                                            <option value="inactive" {{old('status')=='inactive' ? 'selected' :''}}>InActive</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-12">                                
-                                        <select name="condition" class="form-control show-tick">
-                                            <option value="">-- Condition --</option>
-                                            <option value="banner" {{old('condition')=='banner' ? 'selected' :''}}>Banner</option>
-                                            <option value="promo" {{old('condition')=='promo' ? 'selected' :''}}>Promo</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="row clearfix">
-                                    <div class="col-sm-12">
-                                        <div class="form-group">
-                                            <textarea rows="4" class="form-control no-resize" id="description" name="description" placeholder="Description"></textarea>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-12">
-                                        <input type="file" name="photo" id="photo" class="dropify">
-                                    </div>
-                                    <div class="col-sm-12 mt-3">
-                                        <input type="submit" value="Submit" class="btn btn-primary" />
-                                        <a href="{{ route('banners.index') }}" class="btn btn-outline-secondary">Cancel</a>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+    <div class="container mt-5">
+        <form action="{{ route('banners.store') }}" method="post" enctype="multipart/form-data">
+        @csrf
+            <div class="form-group">
+                <div id="image-trigger" style="cursor: pointer;display:inline-block">
+                    <img src="{{ asset('backend/assets/images/user.png') }}" alt="Select Images" style="max-width: 100px; max-height: 100px;">
                 </div>
+
+                <!-- Hidden file input -->
+                <input type="file" class="form-control" name="images[]" id="images" accept="image/*" multiple style="display:none;">
+
+                <div id="image-preview" class="mt-2 d-flex"></div>
+
+                <!-- Error message for not selecting an image -->
+                <div id="error-message" class="text-danger"></div>
             </div>
-        </div>
+
+            <button type="submit" class="btn btn-primary" id="submit-btn">Create Menu</button>
+        </form>
     </div>
-@endsection
 
-
-@push('scripts')
-    <script src="{{ asset('backend/assets/summernote/dist/summernote.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        $(document).ready(function(){
-            $('#description').summernote();
+        $(document).ready(function () {
+            var selectedImages = [];
+            var isError = $("#error-message");
+            function updatePreview() {
+                const previewContainer = $('#image-preview');
+                previewContainer.empty();
+                
+                const dataTransfer = new DataTransfer();
+
+                selectedImages.forEach(function (file, index) {
+                    console.log(index+1);
+                    const imageUrl = URL.createObjectURL(file);
+                    const radioId = `radio${index}`;
+                    const labelId = `label${index}`;
+                    const previewItem = `
+                        <div class="preview-item" data-index="${index}">
+                            <input type="radio" id="${radioId}" name="selectedImage" value="${file.name}" class="d-none">
+                            <label for="${radioId}" id="${labelId}">
+                                <img src="${imageUrl}" style="max-width: 100px; max-height: 100px;" class="">
+                            </label>
+                            <button class="btn btn-danger btn-sm ml-2" onclick="removeImage('${file.name}')">Delete</button>
+                        </div>
+                    `;
+
+                    previewContainer.append(previewItem);
+                    dataTransfer.items.add(file);
+                });
+
+                $("#images")[0].files = dataTransfer.files;
+            }
+
+            window.removeImage = function (fileName) {
+                const index = selectedImages.findIndex(file => file.name === fileName);
+                if (index !== -1) {
+                    selectedImages.splice(index, 1);
+                    updatePreview();
+                }
+            };
+
+            $('#image-trigger').on('click', function () {
+                $('#images').click();
+            });
+
+            $('#images').on('change', function (e) {
+                const files = e.target.files;
+
+                if (files) {
+                    for (const file of files) {
+                        if (selectedImages.length < 10) {
+                            selectedImages.push(file);
+                        } else {
+                            isError.html("You can only select up to 10 images.");
+                        }
+                    }
+                    updatePreview();
+                }
+            });
+
+            $('#image-preview').on('click', '.preview-item', function () {
+                const index = $(this).data('index');
+                $('#image-preview img').removeClass('selected');
+                $(`#label${index} img`).addClass('selected');
+                $(`#radio${index}`).prop('checked', true);
+            });
+
+            $('form').submit(function (event) {
+                event.preventDefault();
+                const selectedRadio = $('input[name="selectedImage"]:checked').val();
+                if (!selectedRadio) {
+                    isError.html("Please select at least one image");
+                    return;
+                }
+                isError.html("");
+                this.submit();
+
+            });
         });
     </script>
-@endpush
+
+</body>
+
+</html>
